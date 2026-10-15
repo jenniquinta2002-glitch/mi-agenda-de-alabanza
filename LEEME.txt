@@ -1,0 +1,33 @@
+MI AGENDA DE ALABANZA — PAQUETE PWA
+=====================================
+
+CONTENIDO
+- index.html: aplicación.
+- manifest.webmanifest: nombre, iconos y opciones de instalación.
+- sw.js: service worker para guardar la interfaz y abrirla sin conexión.
+- icons/: iconos de instalación.
+
+IMPORTANTE
+Para que una PWA se instale correctamente y el modo sin conexión funcione de forma fiable,
+debes publicar estos archivos en un sitio con HTTPS. Abrir index.html directamente como archivo
+(file://) no activa el service worker.
+
+PUBLICACIÓN SENCILLA (GitHub Pages u otro alojamiento HTTPS)
+1. Crea un repositorio/sitio estático y sube TODO el contenido de esta carpeta, conservando
+   la estructura de archivos.
+2. Activa el alojamiento HTTPS (por ejemplo, GitHub Pages).
+3. Abre la dirección HTTPS en Chrome desde tu Android.
+4. Espera a que cargue una vez con internet para que el service worker guarde los archivos.
+5. En Chrome, abre el menú ⋮ y elige “Instalar aplicación” o “Añadir a pantalla de inicio”.
+   El texto exacto puede variar según el navegador.
+
+DATOS PERSONALES
+Las canciones, notas, devocionales y responsabilidades se guardan en localStorage del navegador.
+No se envían a un servidor y no se sincronizan entre dispositivos. Exporta periódicamente una copia
+desde la sección Copias de seguridad. Evita borrar los datos del sitio/navegador si no tienes copia.
+
+LÍMITES DE ESTA VERSIÓN
+- El modo offline permite cargar la interfaz después de la primera visita online; el navegador debe
+  conservar su caché.
+- La importación de documentos está limitada a texto y JSON compatible.
+- No incluye sincronización en la nube, cuentas, recordatorios push ni conversión OCR de fotos.
