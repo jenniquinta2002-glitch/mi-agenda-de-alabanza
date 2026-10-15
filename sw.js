@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-agenda-alabanza-v1';
+const CACHE_NAME = 'mi-agenda-alabanza-v2';
 const APP_SHELL = [
   './',
   './index.html',
