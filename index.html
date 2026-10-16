@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#6f4e37">
+<meta name="description" content="Agenda personal para devocionales, canciones y responsabilidades del grupo de alabanza.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Mi Agenda de Alabanza</title>
 <style>
 :root{--cream:#fbf7ef;--paper:#fffdf8;--ink:#392c24;--muted:#817267;--gold:#b58a4b;--goldlight:#f1e4cd;--brown:#6f4e37;--line:#e9dfd1;--green:#6c7c62;--rose:#b97868}
@@ -18,4 +22,135 @@ main{max-width:780px;margin:auto;padding:18px 14px}.view{display:none}.view.acti
 </head>
 <body>
 <header>
- <div class="topline"><div><div class="eyebrow">Tu espacio de servicio</div><div class="brand">Mi Agenda de Alabanza</div><p class="sub">Prepara el corazón. Organiza la alabanza.</p></div><button class="roundbtn" onclick="openBackup()" aria-label="Copias de seguridad">↥</button></div>
+ <div class="topline"><div><div class="eyebrow">Tu espacio de servicio</div><div class="brand">Mi Agenda de Alabanza</div><p class="sub">Prepara el corazón. Organiza la alabanza.</p></div><div style="display:flex;gap:7px;align-items:center">
+ <button id="installBtn" class="roundbtn" style="display:none" onclick="installPWA()" aria-label="Instalar aplicación">↓ Instalar</button>
+ <button class="roundbtn" onclick="openBackup()" aria-label="Copias de seguridad">↥</button>
+</div></div>
+</header>
+<main>
+<section id="home" class="view active">
+ <div class="card hero"><div class="eyebrow" style="color:#7b5b37">Bienvenida</div><h3>Sirve con orden, canta con propósito.</h3><p class="muted">Tus devocionales, canciones y responsabilidades, reunidos en un solo lugar.</p><div class="actions"><button class="btn" onclick="newDev()">＋ Nuevo devocional</button><button class="btn light" onclick="newSong()">♫ Guardar canción</button></div></div>
+ <div class="stats"><div class="stat"><strong id="statSongs">0</strong><span>Canciones</span></div><div class="stat"><strong id="statDevs">0</strong><span>Devocionales</span></div><div class="stat"><strong id="statDuties">0</strong><span>Responsabilidades</span></div></div>
+ <div class="sectionhead"><h2>Próximo culto</h2><button class="btn outline small" onclick="showView('calendar')">Ver calendario</button></div>
+ <div id="nextService" class="card"></div>
+ <div class="sectionhead"><h2>Accesos rápidos</h2></div>
+ <div class="card actions"><button class="btn light" onclick="showView('songs')">Buscar canciones</button><button class="btn light" onclick="showView('duties')">Ver responsabilidades</button><button class="btn light" onclick="showView('notes')">Mis notas</button></div>
+ <div class="notice">Consejo: exporta una copia de seguridad de vez en cuando para conservar tus apuntes si cambias de teléfono o navegador.</div>
+</section>
+<section id="calendar" class="view">
+ <div class="sectionhead"><div><h2>Calendario espiritual</h2><div class="muted">Toca una fecha para preparar el culto.</div></div><button class="btn small" onclick="newDev()">＋ Añadir</button></div>
+ <div class="card"><div class="monthbar"><button onclick="moveMonth(-1)">‹</button><strong id="monthLabel"></strong><button onclick="moveMonth(1)">›</button></div><div class="calendar" id="calendarGrid"></div></div>
+ <div id="selectedDateCard" class="card"></div>
+ <div class="sectionhead"><h2>Agenda semanal</h2></div><div id="upcomingList"></div>
+</section>
+<section id="songs" class="view">
+ <div class="sectionhead"><div><h2>Biblioteca de canciones</h2><div class="muted">Encuentra una canción por título, letra, tono o tema.</div></div><button class="btn small" onclick="newSong()">＋ Nueva</button></div>
+ <div class="toolbar"><input id="songSearch" class="search" placeholder="⌕ Buscar una canción..." oninput="renderSongs()"><button class="btn light small" onclick="document.getElementById('songImport').click()">Importar</button><input id="songImport" type="file" accept=".txt,.csv,.json,text/plain,text/csv,application/json" class="hidden" onchange="importSongFile(event)"></div>
+ <div class="toolbar"><select id="songFilter" class="search" onchange="renderSongs()"><option value="">Todas las categorías</option><option>Adoración</option><option>Alabanza</option><option>Gratitud</option><option>Entrega</option><option>Presencia de Dios</option><option>Otros temas</option></select><button class="btn outline small" onclick="renderFavorites()">★ Favoritas</button></div>
+ <div id="songList" class="card"></div>
+</section>
+<section id="duties" class="view">
+ <div class="sectionhead"><div><h2>Responsabilidades</h2><div class="muted">Quién comparte el devocional y cuándo le corresponde.</div></div><button class="btn small" onclick="newDuty()">＋ Añadir</button></div>
+ <div class="card"><div class="field"><label>Buscar por nombre</label><input id="dutySearch" placeholder="Nombre de la persona..." oninput="renderDuties()"></div><div class="field"><label>Filtrar por estado</label><select id="dutyFilter" onchange="renderDuties()"><option value="">Todas</option><option value="pending">Pendientes</option><option value="done">Realizadas</option></select></div></div>
+ <div id="dutyList"></div>
+</section>
+<section id="notes" class="view">
+ <div class="sectionhead"><div><h2>Mis notas</h2><div class="muted">Ideas, versículos e introducciones para canciones.</div></div><button class="btn small" onclick="newNote()">＋ Nota</button></div>
+ <div id="noteList"></div>
+ <div class="footer-note">Tus notas se guardan en este dispositivo/navegador.</div>
+</section>
+<section id="editor" class="view"><div class="sectionhead"><button class="btn outline small" onclick="goBack()">← Volver</button><h2 id="editorTitle">Editar</h2></div><div id="editorBody" class="card"></div></section>
+<section id="backup" class="view"><div class="sectionhead"><button class="btn outline small" onclick="goBack()">← Volver</button><h2>Copias de seguridad</h2></div><div class="card"><p>Guarda todos tus devocionales, canciones, notas y responsabilidades en un archivo JSON. Puedes importarlo después para recuperar tus datos.</p><div class="actions"><button class="btn" onclick="exportBackup()">Exportar copia</button><button class="btn light" onclick="document.getElementById('backupImport').click()">Restaurar copia</button><input type="file" id="backupImport" accept=".json,application/json" class="hidden" onchange="restoreBackup(event)"></div><p class="smalltext">Restaurar una copia reemplaza los datos actuales. Exporta primero si quieres conservarlos.</p></div><div class="notice">Privacidad: esta versión guarda los datos localmente y no los envía a ningún servidor. Si borras los datos del navegador, podrías perderlos si no tienes una copia.</div></section>
+</main>
+<nav class="nav">
+ <button class="active" data-view="home" onclick="showView('home')"><span class="ico">⌂</span>Inicio</button>
+ <button data-view="calendar" onclick="showView('calendar')"><span class="ico">▦</span>Calendario</button>
+ <button data-view="songs" onclick="showView('songs')"><span class="ico">♫</span>Canciones</button>
+ <button data-view="duties" onclick="showView('duties')"><span class="ico">☷</span>Responsabilidades</button>
+ <button data-view="notes" onclick="showView('notes')"><span class="ico">✎</span>Notas</button>
+</nav>
+<script>
+const KEY='miAgendaAlabanza_v1';
+let db={songs:[],devs:[],duties:[],notes:[]};
+let currentView='home',previousView='home', selectedDate=iso(new Date()), monthCursor=new Date(new Date().getFullYear(),new Date().getMonth(),1), favoritesOnly=false;
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function load(){try{const x=localStorage.getItem(KEY);if(x)db={...db,...JSON.parse(x)}}catch(e){alert('No se pudieron leer los datos guardados. Puedes restaurar una copia de seguridad.')}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function niceDate(s){if(!s)return 'Fecha sin definir';return new Date(s+'T12:00:00').toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+function showView(id){if(id!=='editor'&&id!=='backup')previousView=id;currentView=id;document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));if(id==='calendar')renderCalendar();if(id==='songs')renderSongs();if(id==='duties')renderDuties();if(id==='notes')renderNotes();if(id==='home')renderHome();window.scrollTo(0,0)}
+function goBack(){showView(previousView||'home')}
+function openBackup(){showView('backup')}
+function renderAll(){renderHome();renderCalendar();renderSongs();renderDuties();renderNotes()}
+function renderHome(){document.getElementById('statSongs').textContent=db.songs.length;document.getElementById('statDevs').textContent=db.devs.length;document.getElementById('statDuties').textContent=db.duties.filter(d=>!d.done).length;
+let future=db.devs.filter(d=>d.date&&d.date>=iso(new Date())).sort((a,b)=>a.date.localeCompare(b.date))[0];
+document.getElementById('nextService').innerHTML=future?`<div class="eyebrow">${esc(niceDate(future.date))}</div><h3 style="margin:7px 0">${esc(future.theme||'Devocional por preparar')}</h3><p class="muted">${esc(future.bible||'Agrega un texto bíblico')} · ${(future.songIds||[]).length} canciones vinculadas</p><button class="btn light small" onclick="editDev('${future.id}')">Abrir devocional</button>`:`<div class="empty"><div class="symbol">☼</div><strong>No has programado un devocional todavía.</strong><p>Empieza por añadir el próximo jueves o domingo.</p><button class="btn" onclick="newDev()">Crear devocional</button></div>`}
+function moveMonth(n){monthCursor=new Date(monthCursor.getFullYear(),monthCursor.getMonth()+n,1);renderCalendar()}
+function renderCalendar(){let y=monthCursor.getFullYear(),m=monthCursor.getMonth();document.getElementById('monthLabel').textContent=monthCursor.toLocaleDateString('es',{month:'long',year:'numeric'});let first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate();let html=['L','M','X','J','V','S','D'].map(x=>`<div class="dow">${x}</div>`).join('');for(let i=0;i<start;i++)html+='<div class="day blank"></div>';for(let d=1;d<=days;d++){let date=iso(new Date(y,m,d)),dt=new Date(y,m,d),service=[0,3].includes(dt.getDay()),has=db.devs.some(v=>v.date===date),cls='day'+(service?' service':'')+(date===selectedDate?' selected':'');html+=`<button class="${cls}" onclick="selectDate('${date}')">${d}${has?'<span class="dot"></span>':''}${service?'<small>'+ (dt.getDay()===0?'Culto':'Culto')+'</small>':''}</button>`}document.getElementById('calendarGrid').innerHTML=html;renderSelectedDate();let upcoming=db.devs.filter(d=>d.date).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8);document.getElementById('upcomingList').innerHTML=upcoming.length?upcoming.map(d=>`<div class="card listrow"><div><strong>${esc(d.theme||'Devocional')}</strong><p class="muted">${esc(niceDate(d.date))}</p></div><button class="btn light small" onclick="editDev('${d.id}')">Abrir</button></div>`).join(''):'<div class="card empty">Tus próximos devocionales aparecerán aquí.</div>'}
+function selectDate(s){selectedDate=s;monthCursor=new Date(s+'T12:00:00');renderCalendar()}
+function renderSelectedDate(){let ds=db.devs.filter(d=>d.date===selectedDate);document.getElementById('selectedDateCard').innerHTML=`<div class="eyebrow">${esc(niceDate(selectedDate))}</div><h3 style="font:1.2rem Georgia;margin:6px 0 12px">Plan para este día</h3>${ds.length?ds.map(d=>`<div class="songitem"><strong>${esc(d.theme||'Devocional sin título')}</strong><p class="muted">${esc(d.bible||'Sin texto bíblico')}</p><button class="btn light small" onclick="editDev('${d.id}')">Editar</button></div>`).join(''): '<p class="muted">Todavía no hay devocional para esta fecha.</p>'}<button class="btn" onclick="newDev('${selectedDate}')">＋ Añadir devocional</button>`}
+function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function formField(label,name,value='',type='text',placeholder=''){return `<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${esc(value)}" placeholder="${esc(placeholder)}"></div>`}
+function area(label,name,value='',placeholder=''){return `<div class="field"><label>${label}</label><textarea name="${name}" placeholder="${esc(placeholder)}">${esc(value)}</textarea></div>`}
+function selectField(label,name,options,value=''){return `<div class="field"><label>${label}</label><select name="${name}">${options.map(o=>`<option value="${esc(o)}" ${o===value?'selected':''}>${esc(o||'Selecciona...')}</option>`).join('')}</select></div>`}
+function openEditor(title,body,submitText,onSubmit){document.getElementById('editorTitle').textContent=title;document.getElementById('editorBody').innerHTML=body+`<div class="actions" style="margin-top:16px"><button class="btn" id="saveEditor">${submitText||'Guardar'}</button><button class="btn outline" onclick="goBack()">Cancelar</button></div>`;document.getElementById('saveEditor').onclick=()=>onSubmit(document.getElementById('editorBody'));showView('editor')}
+function newDev(date=selectedDate){let d={id:id(),date,theme:'',bible:'',reflection:'',prayer:'',intro:'',notes:'',songIds:[]};editDevData(d,true)}
+function editDev(idv){let d=db.devs.find(x=>x.id===idv);if(d)editDevData(d,false)}
+function editDevData(d,isNew){let songChecks=db.songs.map(s=>`<label><input type="checkbox" name="songIds" value="${s.id}" ${(d.songIds||[]).includes(s.id)?'checked':''}> <span>${esc(s.title)}</span></label>`).join('');let body=`${formField('Fecha del culto','date',d.date,'date')}${formField('Tema del devocional','theme',d.theme,'text','Ej. Proclamar la gloria de Dios')}${formField('Texto bíblico','bible',d.bible,'text','Ej. Salmo 96:3-4')}${area('Reflexión','reflection',d.reflection,'Ideas principales del mensaje...')}${area('Introducción para presentar una canción','intro',d.intro,'¿Qué puedes decir antes de cantar?')}${area('Oración final','prayer',d.prayer,'Escribe tu oración...')}${area('Notas personales','notes',d.notes,'Pendientes, ideas o recordatorios...')}<div class="field"><label>Canciones relacionadas</label><div class="checklist">${songChecks||'<p class="muted">Aún no tienes canciones. Primero guarda canciones en la biblioteca.</p>'}</div></div>`;openEditor(isNew?'Nuevo devocional':'Editar devocional',body,'Guardar devocional',el=>{let val=n=>el.querySelector(`[name="${n}"]`)?.value||'';let songIds=[...el.querySelectorAll('[name="songIds"]:checked')].map(x=>x.value);let next={...d,date:val('date'),theme:val('theme'),bible:val('bible'),reflection:val('reflection'),intro:val('intro'),prayer:val('prayer'),notes:val('notes'),songIds};if(isNew)db.devs.push(next);else db.devs=db.devs.map(x=>x.id===d.id?next:x);selectedDate=next.date||selectedDate;save();showView('calendar')});}
+function newSong(){editSongData({id:id(),title:'',lyrics:'',key:'',category:'Adoración',topic:'',favorite:false},true)}
+function editSong(idv){let s=db.songs.find(x=>x.id===idv);if(s)editSongData(s,false)}
+function editSongData(s,isNew){let cats=['Adoración','Alabanza','Gratitud','Entrega','Presencia de Dios','Otros temas'];let body=`${formField('Título de la canción','title',s.title,'text','Nombre de la canción')}${area('Letra completa','lyrics',s.lyrics,'Escribe o pega aquí la letra...') }<div class="two">${formField('Tono musical','key',s.key,'text','Ej. Sol / G')}${selectField('Categoría','category',cats,s.category)}</div>${formField('Tema espiritual','topic',s.topic,'text','Ej. confianza, gratitud, cruz...')}<label style="display:flex;align-items:center;gap:8px;margin:12px 0"><input name="favorite" type="checkbox" ${s.favorite?'checked':''}> Marcar como favorita ★</label>`;openEditor(isNew?'Guardar canción':'Editar canción',body,'Guardar canción',el=>{let val=n=>el.querySelector(`[name="${n}"]`)?.value||'';let next={...s,title:val('title').trim(),lyrics:val('lyrics'),key:val('key'),category:val('category'),topic:val('topic'),favorite:el.querySelector('[name="favorite"]').checked};if(!next.title){alert('Escribe al menos el título de la canción.');return}if(isNew)db.songs.push(next);else db.songs=db.songs.map(x=>x.id===s.id?next:x);save();showView('songs')})}
+function renderSongs(){favoritesOnly=false;renderSongList()}
+function renderFavorites(){favoritesOnly=true;renderSongList()}
+function renderSongList(){let q=(document.getElementById('songSearch')?.value||'').toLowerCase().trim(),cat=document.getElementById('songFilter')?.value||'';let arr=db.songs.filter(s=>(!favoritesOnly||s.favorite)&&(!cat||s.category===cat)&&(!q||[s.title,s.lyrics,s.key,s.category,s.topic].join(' ').toLowerCase().includes(q)));document.getElementById('songList').innerHTML=arr.length?arr.map(s=>`<div class="songitem"><div class="listrow"><div style="flex:1"><h3>${esc(s.title)} ${s.favorite?'<span class="fav">★</span>':''}</h3><span class="pill">${esc(s.category||'Sin categoría')}</span>${s.key?`<span class="pill">Tono: ${esc(s.key)}</span>`:''}<p class="muted">${esc(s.topic||'')}</p></div><button class="btn outline small" onclick="editSong('${s.id}')">Editar</button></div><details><summary style="cursor:pointer;color:var(--brown);font-weight:650;padding:8px 0">Ver letra</summary><div class="songtext">${esc(s.lyrics||'Todavía no has añadido la letra.')}</div><div class="actions"><button class="btn light small" onclick="copySong('${s.id}')">Copiar letra</button><button class="btn outline small" onclick="shareSong('${s.id}')">Compartir</button><button class="btn outline small" onclick="editSong('${s.id}')">Editar</button><button class="btn danger small" onclick="deleteSong('${s.id}')">Eliminar</button></div></details></div>`).join(''):'<div class="empty"><div class="symbol">♫</div><strong>No se encontraron canciones</strong><p>Añade tu primera canción o cambia la búsqueda.</p><button class="btn" onclick="newSong()">Guardar primera canción</button></div>'}
+function copySong(idv){let s=db.songs.find(x=>x.id===idv);if(!s)return;let text=s.title+'\\n\\n'+s.lyrics;if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>alert('Letra copiada.')).catch(()=>fallbackCopy(text));else fallbackCopy(text)}
+function fallbackCopy(t){let a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();alert('Texto copiado si tu navegador permite copiar.')}
+function shareSong(idv){let s=db.songs.find(x=>x.id===idv);if(!s)return;let text=s.title+'\\n\\n'+s.lyrics;if(navigator.share)navigator.share({title:s.title,text}).catch(()=>{});else fallbackCopy(text)}
+function deleteSong(idv){if(confirm('¿Eliminar esta canción?')){db.songs=db.songs.filter(s=>s.id!==idv);db.devs.forEach(d=>d.songIds=(d.songIds||[]).filter(x=>x!==idv));save()}}
+function newDuty(){editDutyData({id:id(),name:'',date:selectedDate,topic:'',done:false},true)}
+function editDuty(idv){let d=db.duties.find(x=>x.id===idv);if(d)editDutyData(d,false)}
+function editDutyData(d,isNew){let body=`${formField('Nombre de la persona','name',d.name,'text','Nombre completo')}${formField('Día que le corresponde','date',d.date,'date')}${formField('Tema o pasaje (opcional)','topic',d.topic,'text','Tema que preparará')}<label style="display:flex;align-items:center;gap:8px;margin:12px 0"><input name="done" type="checkbox" ${d.done?'checked':''}> Marcar como realizada</label>`;openEditor(isNew?'Nueva responsabilidad':'Editar responsabilidad',body,'Guardar responsabilidad',el=>{let val=n=>el.querySelector(`[name="${n}"]`)?.value||'';let next={...d,name:val('name').trim(),date:val('date'),topic:val('topic'),done:el.querySelector('[name="done"]').checked};if(!next.name){alert('Escribe el nombre de la persona.');return}if(isNew)db.duties.push(next);else db.duties=db.duties.map(x=>x.id===d.id?next:x);save();showView('duties')})}
+function renderDuties(){let q=(document.getElementById('dutySearch')?.value||'').toLowerCase(),f=document.getElementById('dutyFilter')?.value||'';let arr=db.duties.filter(d=>d.name.toLowerCase().includes(q)&&(!f||(f==='done'?d.done:!d.done))).sort((a,b)=>(a.date||'').localeCompare(b.date||''));document.getElementById('dutyList').innerHTML=arr.length?arr.map(d=>`<div class="card"><div class="listrow"><div><span class="pill">${d.done?'Realizada':'Pendiente'}</span><h3>${esc(d.name)}</h3><p class="muted">${esc(niceDate(d.date))}</p>${d.topic?`<p>${esc(d.topic)}</p>`:''}</div><button class="btn outline small" onclick="editDuty('${d.id}')">Editar</button></div><div class="actions" style="margin-top:10px"><button class="btn light small" onclick="toggleDuty('${d.id}')">${d.done?'Marcar pendiente':'Marcar realizada'}</button><button class="btn danger small" onclick="deleteDuty('${d.id}')">Eliminar</button></div></div>`).join(''):'<div class="card empty"><div class="symbol">☷</div><strong>No hay responsabilidades registradas.</strong><p>Agrega el nombre de la persona y la fecha que le corresponde.</p><button class="btn" onclick="newDuty()">Añadir responsabilidad</button></div>'}
+function toggleDuty(idv){db.duties=db.duties.map(d=>d.id===idv?{...d,done:!d.done}:d);save()}
+function deleteDuty(idv){if(confirm('¿Eliminar esta responsabilidad?')){db.duties=db.duties.filter(d=>d.id!==idv);save()}}
+function newNote(){editNoteData({id:id(),title:'',body:'',date:iso(new Date())},true)}
+function editNote(idv){let n=db.notes.find(x=>x.id===idv);if(n)editNoteData(n,false)}
+function editNoteData(n,isNew){let body=`${formField('Título','title',n.title,'text','Ej. Ideas para el próximo culto')}${formField('Fecha','date',n.date,'date')}${area('Contenido','body',n.body,'Escribe tus ideas, versículos o recordatorios...')}`;openEditor(isNew?'Nueva nota':'Editar nota',body,'Guardar nota',el=>{let val=k=>el.querySelector(`[name="${k}"]`)?.value||'';let next={...n,title:val('title').trim()||'Nota sin título',date:val('date'),body:val('body')};if(isNew)db.notes.unshift(next);else db.notes=db.notes.map(x=>x.id===n.id?next:x);save();showView('notes')})}
+function renderNotes(){let arr=[...db.notes].sort((a,b)=>(b.date||'').localeCompare(a.date||''));document.getElementById('noteList').innerHTML=arr.length?arr.map(n=>`<div class="card"><div class="listrow"><div><h3>${esc(n.title)}</h3><p class="muted">${esc(niceDate(n.date))}</p></div><button class="btn outline small" onclick="editNote('${n.id}')">Editar</button></div><p style="white-space:pre-wrap">${esc(n.body)}</p><button class="btn danger small" onclick="deleteNote('${n.id}')">Eliminar</button></div>`).join(''):'<div class="card empty"><div class="symbol">✎</div><strong>Tu cuaderno está listo.</strong><p>Guarda aquí ideas, versículos e introducciones para canciones.</p><button class="btn" onclick="newNote()">Crear primera nota</button></div>'}
+function deleteNote(idv){if(confirm('¿Eliminar esta nota?')){db.notes=db.notes.filter(n=>n.id!==idv);save()}}
+function exportBackup(){let blob=new Blob([JSON.stringify({...db,exportedAt:new Date().toISOString(),app:'Mi Agenda de Alabanza'},null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mi-agenda-de-alabanza-copia.json';a.click();URL.revokeObjectURL(a.href)}
+function restoreBackup(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!Array.isArray(x.songs)||!Array.isArray(x.devs)||!Array.isArray(x.duties)||!Array.isArray(x.notes))throw Error();if(confirm('Esto reemplazará tus datos actuales. ¿Continuar?')){db={songs:x.songs,devs:x.devs,duties:x.duties,notes:x.notes};save();showView('home');alert('Copia restaurada.')}}catch(err){alert('El archivo no parece ser una copia válida de Mi Agenda de Alabanza.')}e.target.value=''};r.readAsText(f)}
+function importSongFile(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{let txt=String(r.result||'');if(f.name.toLowerCase().endsWith('.json')){try{let x=JSON.parse(txt),list=Array.isArray(x)?x:(x.songs||[]);list.forEach(s=>{if(s.title)db.songs.push({id:id(),title:s.title,lyrics:s.lyrics||s.letter||'',key:s.key||'',category:s.category||'Otros temas',topic:s.topic||'',favorite:!!s.favorite})});save();alert('Importación terminada. Revisa las canciones importadas.')}catch(e){alert('No se pudo leer ese JSON.')}}else{let title=f.name.replace(/\.[^.]+$/,'');db.songs.push({id:id(),title,lyrics:txt,key:'',category:'Otros temas',topic:'',favorite:false});save();alert('Canción importada. Revisa el título y la letra.')}e.target.value=''};r.readAsText(f)}
+load();renderAll();
+
+// Registro PWA: el service worker guarda la interfaz para abrirla sin conexión.
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'inline-block';
+});
+async function installPWA() {
+  if (!deferredInstallPrompt) {
+    alert('Si tu navegador permite instalarla, abre el menú del navegador y elige “Instalar aplicación” o “Añadir a pantalla de inicio”.');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'none';
+}
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'none';
+});
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('No se pudo activar el modo sin conexión:', err));
+  });
+}
+</script>
+</body>
+</html>
